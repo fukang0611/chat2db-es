@@ -61,7 +61,7 @@ public class ElasticsearchService {
      * 创建索引
      */
     private void createIndex() throws IOException {
-        // 定义索引映射
+        // 定义索引映射（包含向量字段）
         String mapping = """
             {
               "properties": {
@@ -90,6 +90,24 @@ public class ElasticsearchService {
                 },
                 "author": {
                   "type": "keyword"
+                },
+                "titleEmbedding": {
+                  "type": "dense_vector",
+                  "dims": 1536,
+                  "index": true,
+                  "similarity": "cosine"
+                },
+                "contentEmbedding": {
+                  "type": "dense_vector",
+                  "dims": 1536,
+                  "index": true,
+                  "similarity": "cosine"
+                },
+                "combinedEmbedding": {
+                  "type": "dense_vector",
+                  "dims": 1536,
+                  "index": true,
+                  "similarity": "cosine"
                 }
               }
             }

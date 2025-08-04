@@ -1,6 +1,7 @@
 package com.example.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
 import java.time.LocalDateTime;
@@ -26,6 +27,16 @@ public class Document {
     private LocalDateTime createTime;
     
     private String author;
+    
+    // 向量字段（不在API响应中显示）
+    @JsonIgnore
+    private float[] titleEmbedding;
+    
+    @JsonIgnore
+    private float[] contentEmbedding;
+    
+    @JsonIgnore
+    private float[] combinedEmbedding;
     
     // 构造函数
     public Document() {}
@@ -94,6 +105,31 @@ public class Document {
     
     public void setAuthor(String author) {
         this.author = author;
+    }
+    
+    // 向量字段的getter和setter
+    public float[] getTitleEmbedding() {
+        return titleEmbedding;
+    }
+    
+    public void setTitleEmbedding(float[] titleEmbedding) {
+        this.titleEmbedding = titleEmbedding;
+    }
+    
+    public float[] getContentEmbedding() {
+        return contentEmbedding;
+    }
+    
+    public void setContentEmbedding(float[] contentEmbedding) {
+        this.contentEmbedding = contentEmbedding;
+    }
+    
+    public float[] getCombinedEmbedding() {
+        return combinedEmbedding;
+    }
+    
+    public void setCombinedEmbedding(float[] combinedEmbedding) {
+        this.combinedEmbedding = combinedEmbedding;
     }
     
     @Override

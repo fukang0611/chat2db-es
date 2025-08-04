@@ -14,6 +14,30 @@ spring:
           model: gpt-3.5-turbo
           temperature: 0.1
           max-tokens: 1000
+      embedding:
+        options:
+          model: text-embedding-3-large
+  
+  # 缓存配置
+  cache:
+    type: simple
+    cache-names:
+      - textEmbeddings
+      - vectorSearchResults
+      - hybridSearchResults
+      - aiGeneratedDSL
+  
+  # Redis配置（如果使用Redis缓存）
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      timeout: 2000ms
+      jedis:
+        pool:
+          max-active: 8
+          max-idle: 8
+          min-idle: 0
 
 # Elasticsearch配置
 elasticsearch:

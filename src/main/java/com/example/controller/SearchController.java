@@ -5,6 +5,8 @@ import com.example.dto.SearchResponse;
 import com.example.model.Document;
 import com.example.service.ElasticsearchService;
 import com.example.service.IntelligentSearchService;
+import com.example.service.HybridSearchService;
+import com.example.service.VectorSearchService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.http.HttpStatus;
@@ -29,11 +31,17 @@ public class SearchController {
     
     private final IntelligentSearchService intelligentSearchService;
     private final ElasticsearchService elasticsearchService;
+    private final HybridSearchService hybridSearchService;
+    private final VectorSearchService vectorSearchService;
     
     public SearchController(IntelligentSearchService intelligentSearchService,
-                           ElasticsearchService elasticsearchService) {
+                           ElasticsearchService elasticsearchService,
+                           HybridSearchService hybridSearchService,
+                           VectorSearchService vectorSearchService) {
         this.intelligentSearchService = intelligentSearchService;
         this.elasticsearchService = elasticsearchService;
+        this.hybridSearchService = hybridSearchService;
+        this.vectorSearchService = vectorSearchService;
     }
     
     /**
@@ -72,6 +80,68 @@ public class SearchController {
         
         QueryRequest queryRequest = new QueryRequest(query, page, size);
         return intelligentSearch(queryRequest);
+    }
+    
+    /**
+     * 混合搜索接口（推荐使用）
+     */
+    @PostMapping("/hybrid")
+    public ResponseEntity<SearchResponse> hybridSearch(@Valid @RequestBody QueryRequest queryRequest) {
+        logger.info("收到混合搜索请求: {}", queryRequest);
+        
+        try {
+            SearchResponse response = hybridSearchService.smartSearch(queryRequest);
+            return ResponseEntity.ok(response);
+        } catch (Exception e) {
+            logger.error("混合搜索处理失败", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(new SearchResponse(
+                    queryRequest.getQuery(),
+                    "混合搜索失败: " + e.getMessage(),
+                    List.of(),
+                    0L,
+                    queryRequest.getPage(),
+                    queryRequest.getSize(),
+                    0L
+                ));
+        }
+    }
+    
+    /**
+     * 向量搜索接口
+     */
+    @PostMapping("/vector")
+    public ResponseEntity<Map<String, Object>> vectorSearch(@Valid @RequestBody QueryRequest queryRequest) {
+        logger.info("收到向量搜索请求: {}", queryRequest);
+        
+        try {
+            int from = queryRequest.getPage() * queryRequest.getSize();
+            var esResponse = vectorSearchService.vectorSearch(queryRequest.getQuery(), queryRequest.getSize());
+            
+            if (esResponse == null) {
+                return ResponseEntity.ok(Map.of(
+                    "message", "向量搜索失败，向量生成异常",
+                    "query", queryRequest.getQuery(),
+                    "results", List.of()
+                ));
+            }
+            
+            List<Document> documents = elasticsearchService.extractDocuments(esResponse);
+            
+            return ResponseEntity.ok(Map.of(
+                "query", queryRequest.getQuery(),
+                "searchType", "vector",
+                "documents", documents,
+                "total", esResponse.hits().total().value(),
+                "page", queryRequest.getPage(),
+                "size", queryRequest.getSize()
+            ));
+            
+        } catch (Exception e) {
+            logger.error("向量搜索失败", e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(Map.of("error", "向量搜索失败: " + e.getMessage()));
+        }
     }
     
     /**
