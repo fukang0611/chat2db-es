@@ -1,0 +1,63 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: elasticsearch-ai-query
+    
+  # Spring AI OpenAI配置
+  ai:
+    openai:
+      api-key: ${OPENAI_API_KEY:your-openai-api-key-here}
+      chat:
+        options:
+          model: gpt-3.5-turbo
+          temperature: 0.1
+          max-tokens: 1000
+
+# Elasticsearch配置
+elasticsearch:
+  host: ${ELASTICSEARCH_HOST:localhost}
+  port: ${ELASTICSEARCH_PORT:9200}
+  scheme: ${ELASTICSEARCH_SCHEME:http}
+  username: ${ELASTICSEARCH_USERNAME:}
+  password: ${ELASTICSEARCH_PASSWORD:}
+  
+logging:
+  level:
+    com.example: DEBUG
+    co.elastic.clients: DEBUG
+    root: INFO
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss} - %msg%n"
+
+# 应用自定义配置
+app:
+  elasticsearch:
+    index-name: ${ES_INDEX_NAME:documents}
+    timeout: 30s
+  ai:
+    prompt:
+      system: |
+        你是一个Elasticsearch DSL查询专家。用户会用自然语言描述他们想要搜索的内容，
+        你需要将其转换为有效的Elasticsearch Query DSL JSON格式。
+        
+        文档结构包含以下字段：
+        - title: 文档标题
+        - content: 文档内容  
+        - category: 文档分类
+        - tags: 标签数组
+        - createTime: 创建时间
+        - author: 作者
+        
+        请直接返回JSON格式的DSL查询，不要包含任何解释文字。
+        示例格式：
+        {
+          "query": {
+            "bool": {
+              "must": [
+                {"match": {"title": "搜索词"}}
+              ]
+            }
+          }
+        }
